@@ -1,6 +1,20 @@
-use std::path::Path;
-
 use clap::Parser;
+use csv::Reader;
+use serde::{Deserialize, Serialize};
+use std::{fs, path::Path};
+#[derive(Debug, Deserialize, Serialize)]
+struct Player {
+    #[serde(rename = "Name")]
+    name: String,
+    #[serde(rename = "Position")]
+    position: String,
+    #[serde(rename = "DOB")]
+    dob: String,
+    #[serde(rename = "Nationality")]
+    nationality: String,
+    #[serde(rename = "Kit Number")]
+    kit: u8,
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "rcli", version, author, about, long_about = None)]
@@ -38,7 +52,19 @@ fn verify_input_file(filename: &str) -> Result<String, &'static str> {
     }
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let opts = Opts::parse();
-    println!("{:?}", opts);
+    match opts.cmd {
+        SubCommand::Csv(opts) => {
+            let mut reader = Reader::from_path(opts.input)?;
+            let mut ret = Vec::with_capacity(128);
+            for result in reader.deserialize() {
+                let record: Player = result?;
+                ret.push(record);
+            }
+            let json = serde_json::to_string_pretty(&ret)?;
+            fs::write(opts.output, json)?;
+            Ok(())
+        }
+    }
 }
