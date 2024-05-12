@@ -26,7 +26,6 @@ pub fn process_csv(input: &str, output: &str) -> Result<()> {
     for result in reader.records() {
         let record = result?;
         let json_value = headers.iter().zip(record.iter()).collect::<Value>();
-        println!("{:?}", json_value);
         ret.push(json_value);
     }
     let json = serde_json::to_string_pretty(&ret)?;
